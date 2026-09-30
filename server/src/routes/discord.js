@@ -135,39 +135,54 @@ router.post(
       );
 
       // Mirror command to notification channel
-try {
-  const notificationMessage =
-    `🔔 **Command Received**\n` +
-    `User: ${username}\n` +
-    `Command: /${commandName}` +
-    (inputText ? `\nInput: ${inputText}` : "");
+if (command.mirror_enabled) {
+  try {
+    const notificationMessage =
+      `🔔 **Command Received**\n` +
+      `User: ${username}\n` +
+      `Command: /${commandName}` +
+      (inputText ? `\nInput: ${inputText}` : "");
 
-  await sendDiscordNotification(notificationMessage);
+    await sendDiscordNotification(
+      notificationMessage
+    );
 
+    await pool.query(
+      `UPDATE interaction_logs
+       SET status = $1, action = $2
+       WHERE interaction_id = $3`,
+      [
+        "completed",
+        "Command processed and notification sent",
+        interactionId,
+      ]
+    );
+  } catch (notificationError) {
+    console.error(
+      "Notification failed:",
+      notificationError
+    );
+
+    await pool.query(
+      `UPDATE interaction_logs
+       SET status = $1, error = $2, action = $3
+       WHERE interaction_id = $4`,
+      [
+        "notification_failed",
+        notificationError.message,
+        "Command processed but notification failed",
+        interactionId,
+      ]
+    );
+  }
+} else {
   await pool.query(
     `UPDATE interaction_logs
      SET status = $1, action = $2
      WHERE interaction_id = $3`,
     [
       "completed",
-      "Command processed and notification sent",
-      interactionId,
-    ]
-  );
-} catch (notificationError) {
-  console.error(
-    "Notification failed:",
-    notificationError
-  );
-
-  await pool.query(
-    `UPDATE interaction_logs
-     SET status = $1, error = $2, action = $3
-     WHERE interaction_id = $4`,
-    [
-      "notification_failed",
-      notificationError.message,
-      "Command processed but notification failed",
+      "Command processed; notification disabled",
       interactionId,
     ]
   );

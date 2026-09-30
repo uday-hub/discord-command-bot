@@ -77,7 +77,7 @@ export default function Commands() {
     <div className="min-h-screen bg-slate-100 flex">
       <Sidebar />
 
-      <main className="flex-1 p-8">
+    <main className="flex-1 min-w-0 md:ml-85 md:mr-20 py-10">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-slate-900">
             Commands
