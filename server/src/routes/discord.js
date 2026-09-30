@@ -3,6 +3,10 @@ const nacl = require("tweetnacl");
 
 const pool = require("../config/database");
 
+const {
+  sendDiscordNotification,
+} = require("../services/discordService");
+
 const router = express.Router();
 
 router.post(
@@ -129,6 +133,45 @@ router.post(
           "Command processed successfully",
         ]
       );
+
+      // Mirror command to notification channel
+try {
+  const notificationMessage =
+    `🔔 **Command Received**\n` +
+    `User: ${username}\n` +
+    `Command: /${commandName}` +
+    (inputText ? `\nInput: ${inputText}` : "");
+
+  await sendDiscordNotification(notificationMessage);
+
+  await pool.query(
+    `UPDATE interaction_logs
+     SET status = $1, action = $2
+     WHERE interaction_id = $3`,
+    [
+      "completed",
+      "Command processed and notification sent",
+      interactionId,
+    ]
+  );
+} catch (notificationError) {
+  console.error(
+    "Notification failed:",
+    notificationError
+  );
+
+  await pool.query(
+    `UPDATE interaction_logs
+     SET status = $1, error = $2, action = $3
+     WHERE interaction_id = $4`,
+    [
+      "notification_failed",
+      notificationError.message,
+      "Command processed but notification failed",
+      interactionId,
+    ]
+  );
+}
 
       // Build response
       let responseText = command.response_text;
