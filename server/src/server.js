@@ -5,14 +5,24 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const pool = require("./config/database");
+
 const discordRoutes = require("./routes/discord");
+const authRoutes = require("./routes/auth");
+const adminRoutes = require("./routes/admin");
 
 const app = express();
 
+app.use(cors());
+
+// JSON parser must come BEFORE normal API routes
+app.use(express.json());
+
+// Discord route
 app.use("/api/discord", discordRoutes);
 
-app.use(cors());
-app.use(express.json());
+// Auth route
+app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/", (req, res) => {
   res.json({
