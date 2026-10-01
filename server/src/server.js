@@ -14,11 +14,11 @@ const app = express();
 
 app.use(cors());
 
-// JSON parser must come BEFORE normal API routes
-app.use(express.json());
-
-// Discord route
+// Discord route MUST come before express.json()
 app.use("/api/discord", discordRoutes);
+
+// JSON parser for normal API routes
+app.use(express.json());
 
 // Auth route
 app.use("/api/auth", authRoutes);
